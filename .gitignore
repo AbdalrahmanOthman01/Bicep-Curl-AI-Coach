@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# PyInstaller
+build/
+dist/
+*.spec.bak
+BicepCurlAICoach.spec
+
+# MediaPipe & temporary cache
+.cache/
+
+# OS
+.DS_Store
+Thumbs.db

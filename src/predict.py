@@ -9,11 +9,18 @@ Provides single-frame prediction and smoothed temporal predictions.
 from collections import deque
 import json
 from pathlib import Path
+import sys
 from typing import Any, Dict, List, Optional, Tuple, Union
 import joblib
 import numpy as np
 
 from src.pose_features import FEATURE_NAMES, extract_features_from_mediapipe
+
+
+if getattr(sys, 'frozen', False):
+    BASE_DIR = Path(sys._MEIPASS)
+else:
+    BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 class BicepCurlPredictor:
@@ -29,15 +36,15 @@ class BicepCurlPredictor:
 
     def __init__(
         self,
-        model_path: Union[str, Path] = 'models/bicep_curl_model.pkl',
-        scaler_path: Union[str, Path] = 'models/scaler.pkl',
-        encoder_path: Union[str, Path] = 'models/label_encoder.pkl',
+        model_path: Optional[Union[str, Path]] = None,
+        scaler_path: Optional[Union[str, Path]] = None,
+        encoder_path: Optional[Union[str, Path]] = None,
         smoothing_window: int = 7,
         confidence_threshold: float = 0.55
     ):
-        self.model_path = Path(model_path)
-        self.scaler_path = Path(scaler_path)
-        self.encoder_path = Path(encoder_path)
+        self.model_path = Path(model_path) if model_path else (BASE_DIR / 'models' / 'bicep_curl_model.pkl')
+        self.scaler_path = Path(scaler_path) if scaler_path else (BASE_DIR / 'models' / 'scaler.pkl')
+        self.encoder_path = Path(encoder_path) if encoder_path else (BASE_DIR / 'models' / 'label_encoder.pkl')
         self.smoothing_window = smoothing_window
         self.confidence_threshold = confidence_threshold
 
@@ -71,14 +78,17 @@ class BicepCurlPredictor:
         -------
         dict with raw_label, display_label, confidence, probabilities, smoothed_label
         """
-        # Ensure exact feature order with column names for scaler
-        feature_df = pd.DataFrame(
+        # Ensure exact feature order as 2D numpy array
+        feature_vector = np.array(
             [[features_dict[name] for name in FEATURE_NAMES]],
-            columns=FEATURE_NAMES
+            dtype=np.float32
         )
 
         # Apply same scaling used in training
-        scaled_vector = self.scaler.transform(feature_df)
+        import warnings
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            scaled_vector = self.scaler.transform(feature_vector)
 
         # Probabilities & raw prediction
         probs = self.model.predict_proba(scaled_vector)[0]

@@ -16,7 +16,7 @@ sys.modules['tensorflow'] = None
 
 import cv2
 from flask import Flask, Response, jsonify, render_template, request
-import mediapipe as mp
+import mediapipe.python.solutions.pose as mp_pose
 import numpy as np
 
 from src.form_analysis import BicepCurlAnalyzer
@@ -26,7 +26,16 @@ from src.predict import get_predictor
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
+if getattr(sys, 'frozen', False):
+    BASE_DIR = Path(sys._MEIPASS)
+else:
+    BASE_DIR = Path(__file__).resolve().parent
+
+app = Flask(
+    __name__,
+    template_folder=str(BASE_DIR / 'templates'),
+    static_folder=str(BASE_DIR / 'static')
+)
 
 # Initialize singletons at startup
 logger.info("Initializing ML inference engine...")
@@ -34,7 +43,6 @@ predictor = get_predictor()
 analyzer = BicepCurlAnalyzer()
 
 # Initialize MediaPipe Pose
-mp_pose = mp.solutions.pose
 pose_detector = mp_pose.Pose(
     static_image_mode=False,
     model_complexity=1,
@@ -48,7 +56,7 @@ logger.info("MediaPipe Pose initialized successfully.")
 @app.route('/')
 def index():
     """Render main interactive AI Coach dashboard."""
-    metadata_path = Path('models/model_metadata.json')
+    metadata_path = BASE_DIR / 'models' / 'model_metadata.json'
     metadata = {}
     if metadata_path.exists():
         with open(metadata_path, 'r') as f:

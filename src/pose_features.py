@@ -7,9 +7,8 @@ Extracts normalized upper-body landmarks and biomechanical joint angles,
 omitting all leg dependencies to support bicep curl machines (e.g., seated / preacher curls).
 """
 
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
-import pandas as pd
 
 
 FEATURE_NAMES: List[str] = [
@@ -241,7 +240,7 @@ def extract_features_from_mediapipe(
     return feat_vec, feat_dict
 
 
-def extract_features_from_dataset_row(row: pd.Series) -> Dict[str, float]:
+def extract_features_from_dataset_row(row: Any) -> Dict[str, float]:
     """
     Extract upper-body features from a row in training_data_bicep_curls.csv.
     Coordinates match Sports2D landmark output:
