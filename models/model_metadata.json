@@ -1,0 +1,62 @@
+{
+  "model_type": "RandomForestClassifier",
+  "best_params": {
+    "max_depth": 12,
+    "min_samples_leaf": 1,
+    "min_samples_split": 2,
+    "n_estimators": 150
+  },
+  "feature_names": [
+    "left_elbow_angle",
+    "right_elbow_angle",
+    "left_shoulder_angle",
+    "right_shoulder_angle",
+    "left_arm_vertical_angle",
+    "right_arm_vertical_angle",
+    "left_forearm_vertical_angle",
+    "right_forearm_vertical_angle",
+    "left_wrist_norm_x",
+    "left_wrist_norm_y",
+    "right_wrist_norm_x",
+    "right_wrist_norm_y",
+    "left_elbow_norm_x",
+    "left_elbow_norm_y",
+    "right_elbow_norm_x",
+    "right_elbow_norm_y",
+    "shoulder_symmetry",
+    "elbow_symmetry",
+    "torso_angle",
+    "elbow_distance",
+    "wrist_distance",
+    "left_wrist_to_shoulder_dist",
+    "right_wrist_to_shoulder_dist"
+  ],
+  "classes": [
+    "Correct",
+    "Leg_Drive",
+    "Partial"
+  ],
+  "metrics": {
+    "val_accuracy": 0.9813084112149533,
+    "val_macro_f1": 0.9803323221262872,
+    "test_accuracy": 0.9485981308411215,
+    "test_macro_f1": 0.9469300299816958
+  },
+  "confusion_matrix": [
+    [
+      70,
+      2,
+      0
+    ],
+    [
+      2,
+      82,
+      1
+    ],
+    [
+      4,
+      2,
+      51
+    ]
+  ]
+}

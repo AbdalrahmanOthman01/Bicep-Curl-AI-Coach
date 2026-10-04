@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bicep Curl AI Coach | Real-Time Form Analysis</title>
+  <meta name="description" content="AI-powered real-time biceps curl form analysis, repetition counter, and biomechanical feedback system using MediaPipe Pose and Machine Learning.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 18h12M6 6h12M9 12h6M4 10v4M20 10v4M2 11v2M22 11v2"></path>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">BICEP CURL <span class="gradient-text">AI COACH</span></h1>
+          <p class="brand-subtitle">Machine Curl &amp; Arm Isolation Kinematic Analysis</p>
+        </div>
+      </div>
+      <div class="header-badges">
+        <span class="badge badge-tech">MediaPipe Pose</span>
+        <span class="badge badge-tech">Random Forest (94.9% Acc)</span>
+        <span class="badge badge-accent">Upper-Body Machine Mode</span>
+      </div>
+    </header>
+
+    <!-- Main Grid Layout -->
+    <main class="dashboard-grid">
+      <!-- Left Column: Video Feed & Canvas Overlay -->
+      <section class="viewport-card glass-panel">
+        <div class="card-header">
+          <div class="header-left">
+            <span class="live-dot" id="liveIndicator"></span>
+            <span class="card-title" id="viewportStatus">CAMERA READY</span>
+          </div>
+          <div class="header-right">
+            <span class="fps-counter" id="fpsDisplay">0 FPS</span>
+            <span class="latency-counter" id="latencyDisplay">0 ms</span>
+          </div>
+        </div>
+
+        <div class="video-container" id="videoContainer">
+          <video id="webcam" autoplay playsinline muted></video>
+          <canvas id="outputCanvas"></canvas>
+          
+          <!-- Overlay UI Elements on Camera -->
+          <div class="video-hud-overlay">
+            <div class="hud-top">
+              <div class="status-pill status-ready" id="exerciseStateBadge">
+                EXTENDED
+              </div>
+              <div class="form-pill form-evaluating" id="formStatusBadge">
+                AWAITING POSE
+              </div>
+            </div>
+
+            <div class="hud-bottom">
+              <div class="angle-display">
+                <span class="angle-label">ELBOW ANGLE</span>
+                <span class="angle-value" id="hudElbowAngle">--°</span>
+              </div>
+              <div class="rep-mini-hud">
+                <span class="rep-label">REPS</span>
+                <span class="rep-number" id="hudRepCount">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Placeholder when camera is inactive -->
+          <div class="camera-placeholder" id="cameraPlaceholder">
+            <div class="placeholder-content">
+              <div class="placeholder-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                  <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+              </div>
+              <h3>Webcam is Inactive</h3>
+              <p>Click "Start Camera" below to begin real-time exercise form analysis.</p>
+              <button class="btn btn-primary" id="startCameraBtnInline">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                Start Camera
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Video Control Bar -->
+        <div class="controls-bar">
+          <div class="control-group">
+            <button class="btn btn-primary" id="toggleCameraBtn">
+              <svg id="camIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              <span id="camBtnText">Start Camera</span>
+            </button>
+            <button class="btn btn-secondary" id="resetBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+              Reset Workout
+            </button>
+          </div>
+          <div class="control-group">
+            <label class="toggle-control" title="Toggle audio sound when completing a rep">
+              <input type="checkbox" id="soundToggle" checked>
+              <span class="toggle-slider"></span>
+              <span class="toggle-label">Rep Audio</span>
+            </label>
+            <label class="toggle-control" title="Show/hide skeleton bones on camera">
+              <input type="checkbox" id="skeletonToggle" checked>
+              <span class="toggle-slider"></span>
+              <span class="toggle-label">Skeleton</span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Live Analytics, Rep Counter & Feedback -->
+      <section class="analytics-column">
+        <!-- Big Rep Counter Card -->
+        <div class="counter-card glass-panel">
+          <div class="rep-main-box">
+            <div class="rep-ring-container">
+              <svg class="rep-ring-svg" viewBox="0 0 120 120">
+                <circle class="ring-bg" cx="60" cy="60" r="50"></circle>
+                <circle class="ring-progress" id="repRingProgress" cx="60" cy="60" r="50"></circle>
+              </svg>
+              <div class="ring-content">
+                <span class="rep-val" id="mainRepCount">0</span>
+                <span class="rep-unit">FULL REPS</span>
+              </div>
+            </div>
+            <div class="rep-stats">
+              <div class="stat-item">
+                <span class="stat-label">Partial Reps</span>
+                <span class="stat-value text-warning" id="partialRepCount">0</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Active Phase</span>
+                <span class="stat-value" id="currentPhaseText">REST</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Curl Range</span>
+                <span class="stat-value text-accent" id="romStatusText">Full ROM</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ML Prediction & Confidence Card -->
+        <div class="ml-card glass-panel">
+          <div class="panel-header">
+            <h3>ML FORM CLASSIFIER</h3>
+            <span class="confidence-tag" id="confidenceTag">Confidence: 0%</span>
+          </div>
+          <div class="prediction-status-box" id="predictionBox">
+            <div class="pred-title" id="mlPredictionTitle">NO MOTION DETECTED</div>
+            <p class="pred-subtitle" id="mlPredictionDesc">Position arms in frame to start evaluation</p>
+          </div>
+
+          <!-- Probability Bars -->
+          <div class="prob-container">
+            <div class="prob-bar-row">
+              <span class="prob-label">Correct Form</span>
+              <div class="bar-track"><div class="bar-fill bar-fill-green" id="probCorrect" style="width: 0%"></div></div>
+              <span class="prob-pct" id="probCorrectText">0%</span>
+            </div>
+            <div class="prob-bar-row">
+              <span class="prob-label">Partial Rep (Short ROM)</span>
+              <div class="bar-track"><div class="bar-fill bar-fill-yellow" id="probPartial" style="width: 0%"></div></div>
+              <span class="prob-pct" id="probPartialText">0%</span>
+            </div>
+            <div class="prob-bar-row">
+              <span class="prob-label">Momentum / Swing</span>
+              <div class="bar-track"><div class="bar-fill bar-fill-red" id="probSwing" style="width: 0%"></div></div>
+              <span class="prob-pct" id="probSwingText">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Biomechanical Angles & Machine Form Cues -->
+        <div class="biomech-card glass-panel">
+          <div class="panel-header">
+            <h3>BIOMECHANICAL METRICS</h3>
+            <span class="chip-accent">Machine Curl Isolation</span>
+          </div>
+          <div class="metrics-grid">
+            <div class="metric-box">
+              <span class="metric-title">Left Elbow</span>
+              <span class="metric-num" id="leftElbowText">--°</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-title">Right Elbow</span>
+              <span class="metric-num" id="rightElbowText">--°</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-title">Torso Tilt</span>
+              <span class="metric-num" id="torsoTiltText">--°</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-title">Shoulder Sym.</span>
+              <span class="metric-num" id="shoulderSymText">--</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Real-Time Coaching Feedback Cues -->
+        <div class="feedback-card glass-panel">
+          <div class="panel-header">
+            <h3>REAL-TIME COACHING CUES</h3>
+            <span class="pulse-indicator"></span>
+          </div>
+          <div class="cues-list" id="cuesList">
+            <div class="cue-item cue-info">
+              <span class="cue-icon">ℹ</span>
+              <span class="cue-text">Camera ready. Seat yourself at the curl machine and begin.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer / Model Specs -->
+    <footer class="app-footer glass-panel">
+      <div class="footer-info">
+        <span><strong>Model:</strong> Random Forest Classifier (Optimized 150 Trees)</span>
+        <span>•</span>
+        <span><strong>Dataset:</strong> Kaggle Bicep Curl Kinematics (Filtered Upper-Body)</span>
+        <span>•</span>
+        <span><strong>Features:</strong> 23 Biomechanical Normalized Landmarks &amp; Angles</span>
+      </div>
+      <div class="footer-disclaimer">
+        Notice: Exercise form coach for fitness guidance. Distinguishes ML classification from rule-based kinematic analysis.
+      </div>
+    </footer>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
