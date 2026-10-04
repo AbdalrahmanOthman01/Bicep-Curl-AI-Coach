@@ -4,10 +4,10 @@ An end-to-end Computer Vision and Machine Learning system for real-time biceps c
 
 Designed specifically for **Bicep Curl Machines (Preacher / Seated Arm Curl)**: eliminates all lower-body/leg artifacts, delivering strict upper-body isolation, range-of-motion monitoring, and live coaching cues.
 
-[![GitHub Release](https://img.shields.io/github/v/release/AbdalrahmanOthman01/curl_biceps_v1?color=00f2fe&style=flat-square)](https://github.com/AbdalrahmanOthman01/curl_biceps_v1/releases/tag/v1.0.0)
-[![Windows Executable](https://img.shields.io/badge/Windows-Standalone_.exe-00c853?style=flat-square&logo=windows)](https://github.com/AbdalrahmanOthman01/curl_biceps_v1/releases/download/v1.0.0/BicepCurlAICoach.exe)
+[![GitHub Release](https://img.shields.io/github/v/release/AbdalrahmanOthman01/Bicep-Curl-AI-Coach?color=00f2fe&style=flat-square)](https://github.com/AbdalrahmanOthman01/Bicep-Curl-AI-Coach/releases/tag/v1.0.0)
+[![Windows Executable](https://img.shields.io/badge/Windows-Standalone_.exe-00c853?style=flat-square&logo=windows)](https://github.com/AbdalrahmanOthman01/Bicep-Curl-AI-Coach/releases/download/v1.0.0/BicepCurlAICoach.exe)
 
-> 📦 **Download Standalone App:** Grab [`BicepCurlAICoach.exe`](https://github.com/AbdalrahmanOthman01/curl_biceps_v1/releases/download/v1.0.0/BicepCurlAICoach.exe) directly from the [GitHub Releases](https://github.com/AbdalrahmanOthman01/curl_biceps_v1/releases/tag/v1.0.0). No Python installation or dependencies required—double-click and start training!
+> 📦 **Download Standalone App:** Grab [`BicepCurlAICoach.exe`](https://github.com/AbdalrahmanOthman01/Bicep-Curl-AI-Coach/releases/download/v1.0.0/BicepCurlAICoach.exe) directly from the [GitHub Releases](https://github.com/AbdalrahmanOthman01/Bicep-Curl-AI-Coach/releases/tag/v1.0.0). No Python installation or dependencies required—double-click and start training!
 
 ---
 

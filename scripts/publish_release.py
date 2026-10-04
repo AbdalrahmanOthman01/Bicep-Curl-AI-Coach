@@ -49,7 +49,7 @@ def make_github_request(url, method="GET", data=None, headers=None):
         except Exception:
             return e.code, {"error": body}
 
-def publish_release(repo="AbdalrahmanOthman01/curl_biceps_v1", tag="v1.0.0", title="Bicep Curl AI Coach v1.0.0"):
+def publish_release(repo="AbdalrahmanOthman01/Bicep-Curl-AI-Coach", tag="v1.0.0", title="Bicep Curl AI Coach v1.0.0"):
     token = get_github_token()
     if not token:
         print("ERROR: No GitHub token found.")
