@@ -25,16 +25,26 @@ added_datas = [
     ('models', 'models'),
 ] + mediapipe_datas
 
-# Hidden imports needed by scikit-learn and mediapipe
+# Hidden imports needed by scikit-learn, scipy, and mediapipe
 hidden_imports = [
     'mediapipe',
     'mediapipe.python.solutions.pose',
+    'scipy',
+    'scipy.sparse',
+    'scipy.sparse.csgraph',
+    'scipy.stats',
+    'scipy.special',
     'sklearn',
     'sklearn.ensemble',
     'sklearn.ensemble._forest',
     'sklearn.preprocessing',
     'sklearn.preprocessing._data',
+    'sklearn.utils',
     'sklearn.utils._typedefs',
+    'sklearn.utils._chunking',
+    'sklearn.utils._param_validation',
+    'sklearn.tree',
+    'sklearn.tree._tree',
     'joblib',
     'cv2',
     'numpy',
@@ -45,7 +55,6 @@ hidden_imports = [
 # Exclude unnecessary heavy packages to keep build ultra fast and .exe compact
 excluded_modules = [
     'pandas',
-    'scipy',
     'jax',
     'jaxlib',
     'mediapipe.tasks',
