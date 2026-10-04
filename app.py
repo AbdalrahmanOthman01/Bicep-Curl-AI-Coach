@@ -31,6 +31,11 @@ if sys.stderr is None:
 # Prevent potential protobuf conflict between tensorflow and mediapipe
 sys.modules['tensorflow'] = None
 
+# Stub mediapipe.tasks so mediapipe/__init__.py line 17 doesn't fail
+if 'mediapipe.tasks' not in sys.modules:
+    sys.modules['mediapipe.tasks'] = types.ModuleType('mediapipe.tasks')
+    sys.modules['mediapipe.tasks.python'] = types.ModuleType('mediapipe.tasks.python')
+
 # Stub matplotlib so mediapipe doesn't fail when matplotlib is excluded
 if 'matplotlib' not in sys.modules:
     m = types.ModuleType('matplotlib')

@@ -5,6 +5,9 @@ from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 import types
 sys.modules['tensorflow'] = None
+if 'mediapipe.tasks' not in sys.modules:
+    sys.modules['mediapipe.tasks'] = types.ModuleType('mediapipe.tasks')
+    sys.modules['mediapipe.tasks.python'] = types.ModuleType('mediapipe.tasks.python')
 if 'matplotlib' not in sys.modules:
     m = types.ModuleType('matplotlib')
     m.pyplot = types.ModuleType('matplotlib.pyplot')
@@ -122,7 +125,7 @@ a = Analysis(
     hiddenimports=hidden_imports,
     hookspath=[],
     hooksconfig={},
-    runtime_hooks=[],
+    runtime_hooks=['scripts/rthook_stubs.py'],
     excludes=excluded_modules,
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
