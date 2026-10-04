@@ -9,10 +9,34 @@ import json
 import logging
 from pathlib import Path
 import sys
+import threading
 import time
+
+import os
+import tempfile
+import types
+
+# Safe stdout/stderr redirection if running as a windowed/noconsole GUI app
+if sys.stdout is None:
+    try:
+        sys.stdout = open(os.path.join(tempfile.gettempdir(), 'bicep_curl_app.log'), 'a', encoding='utf-8')
+    except Exception:
+        sys.stdout = open(os.devnull, 'w')
+if sys.stderr is None:
+    try:
+        sys.stderr = open(os.path.join(tempfile.gettempdir(), 'bicep_curl_app.log'), 'a', encoding='utf-8')
+    except Exception:
+        sys.stderr = open(os.devnull, 'w')
 
 # Prevent potential protobuf conflict between tensorflow and mediapipe
 sys.modules['tensorflow'] = None
+
+# Stub matplotlib so mediapipe doesn't fail when matplotlib is excluded
+if 'matplotlib' not in sys.modules:
+    m = types.ModuleType('matplotlib')
+    m.pyplot = types.ModuleType('matplotlib.pyplot')
+    sys.modules['matplotlib'] = m
+    sys.modules['matplotlib.pyplot'] = m.pyplot
 
 import cv2
 from flask import Flask, Response, jsonify, render_template, request
@@ -179,6 +203,17 @@ def predict_frame():
     except Exception as e:
         logger.exception("Error processing frame")
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/shutdown', methods=['GET', 'POST'])
+def shutdown():
+    """Cleanly exit application process when standalone window is closed."""
+    logger.info("Shutdown endpoint called. Exiting application...")
+    def exit_soon():
+        time.sleep(0.5)
+        os._exit(0)
+    threading.Thread(target=exit_soon, daemon=True).start()
+    return jsonify({"status": "shutting down"})
 
 
 if __name__ == '__main__':

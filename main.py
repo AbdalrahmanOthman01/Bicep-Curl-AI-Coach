@@ -2,25 +2,53 @@
 main.py
 -------
 Desktop launcher for Bicep Curl AI Coach application.
-Starts the Flask server, waits for readiness, and automatically opens
-the web dashboard in the default browser.
+Launches Flask server and opens a dedicated, borderless standalone desktop window
+(App Mode with Edge or Chrome) without command prompt or browser URL/tab bars.
 """
 
 import logging
 import os
 from pathlib import Path
+import subprocess
 import sys
+import tempfile
 import threading
 import time
+import types
 import urllib.request
 import webbrowser
 
-# Prevent potential protobuf conflict between tensorflow and mediapipe
+# Safe stdout/stderr redirection if packaged with console=False
+LOG_FILE = os.path.join(tempfile.gettempdir(), 'bicep_curl_app.log')
+if sys.stdout is None:
+    try:
+        sys.stdout = open(LOG_FILE, 'a', encoding='utf-8')
+    except Exception:
+        sys.stdout = open(os.devnull, 'w')
+if sys.stderr is None:
+    try:
+        sys.stderr = open(LOG_FILE, 'a', encoding='utf-8')
+    except Exception:
+        sys.stderr = open(os.devnull, 'w')
+
+# Prevent protobuf conflict between tensorflow and mediapipe
 sys.modules['tensorflow'] = None
+
+# Stub matplotlib so mediapipe doesn't fail when matplotlib is excluded
+if 'matplotlib' not in sys.modules:
+    m = types.ModuleType('matplotlib')
+    m.pyplot = types.ModuleType('matplotlib.pyplot')
+    sys.modules['matplotlib'] = m
+    sys.modules['matplotlib.pyplot'] = m.pyplot
 
 from app import app
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
+logging.basicConfig(
+    filename=LOG_FILE,
+    filemode='a',
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s'
+)
 logger = logging.getLogger("Launcher")
 
 HOST = "127.0.0.1"
@@ -28,57 +56,86 @@ PORT = 5000
 URL = f"http://{HOST}:{PORT}"
 
 
+def find_standalone_browser():
+    """Locate Microsoft Edge or Google Chrome to launch in App Mode."""
+    candidates = [
+        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+        r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+        os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\Edge\Application\msedge.exe"),
+        os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"),
+        os.path.expandvars(r"%PROGRAMFILES%\Microsoft\Edge\Application\msedge.exe"),
+        os.path.expandvars(r"%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"),
+    ]
+    for path in candidates:
+        if os.path.isfile(path):
+            return path
+    return None
+
+
 def run_server():
-    """Run Flask server."""
-    # Run with Werkzeug server without debug reloading
+    """Run Flask server via Werkzeug."""
     from werkzeug.serving import run_simple
     run_simple(HOST, PORT, app, use_reloader=False, threaded=True)
 
 
-def wait_and_open_browser():
-    """Wait for server to respond to health check and open browser."""
-    logger.info(f"Waiting for server at {URL}...")
-    for _ in range(30):
+def wait_for_server(timeout=20):
+    """Wait until Flask responds with 200 OK."""
+    start_time = time.time()
+    while time.time() - start_time < timeout:
         try:
             with urllib.request.urlopen(f"{URL}/status", timeout=1) as resp:
                 if resp.status == 200:
-                    logger.info("Server is up and healthy! Opening browser...")
-                    webbrowser.open(URL)
-                    return
+                    return True
         except Exception:
-            time.sleep(0.5)
-    logger.warning("Server startup timeout; opening browser directly.")
-    webbrowser.open(URL)
-
-
-def print_banner():
-    banner = f"""
-======================================================================
-               BICEP CURL AI COACH - DESKTOP RUNNER
-======================================================================
-  Application URL: {URL}
-  Kinematic Model: Random Forest (Upper-Body Machine Curl Mode)
-  Pose Tracker:    MediaPipe Pose
-  Features:        23 Biomechanical Angles & Normalized Coordinates
-
-  The AI Coach dashboard will automatically launch in your browser.
-  To exit, press Ctrl+C in this terminal window.
-======================================================================
-"""
-    print(banner)
+            time.sleep(0.3)
+    return False
 
 
 def main():
-    print_banner()
+    logger.info("Starting Bicep Curl AI Coach desktop application...")
 
-    # Start browser opener thread
-    threading.Thread(target=wait_and_open_browser, daemon=True).start()
+    # Start Flask server on a background daemon thread
+    server_thread = threading.Thread(target=run_server, daemon=True)
+    server_thread.start()
 
-    # Run server in main thread
+    # Wait for server to be responsive
+    ready = wait_for_server(timeout=25)
+    if not ready:
+        logger.warning("Server took too long to respond; proceeding to open window.")
+
+    # Try launching in Standalone App Mode (Edge or Chrome)
+    browser_exe = find_standalone_browser()
+
+    if browser_exe:
+        logger.info(f"Launching standalone app window via {browser_exe}")
+        profile_dir = os.path.join(tempfile.gettempdir(), 'bicep_curl_browser_profile')
+        cmd = [
+            browser_exe,
+            f"--app={URL}",
+            f"--user-data-dir={profile_dir}",
+            "--window-size=1300,880",
+            "--window-position=80,40",
+            "--no-first-run",
+            "--no-default-browser-check"
+        ]
+        try:
+            subprocess.Popen(cmd)
+            logger.info("Standalone app window spawned successfully.")
+        except Exception as e:
+            logger.error(f"Failed to launch standalone window: {e}")
+            webbrowser.open(URL)
+    else:
+        logger.info("Opening URL in standard browser as fallback...")
+        webbrowser.open(URL)
+
+    # Keep application alive until /shutdown is triggered or user closes window
     try:
-        run_server()
+        while True:
+            time.sleep(1)
     except (KeyboardInterrupt, SystemExit):
-        logger.info("Shutting down Bicep Curl AI Coach. Goodbye!")
+        logger.info("Application exiting.")
 
 
 if __name__ == '__main__':

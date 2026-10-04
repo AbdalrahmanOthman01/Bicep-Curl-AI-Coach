@@ -3,7 +3,13 @@ import sys
 from pathlib import Path
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
+import types
 sys.modules['tensorflow'] = None
+if 'matplotlib' not in sys.modules:
+    m = types.ModuleType('matplotlib')
+    m.pyplot = types.ModuleType('matplotlib.pyplot')
+    sys.modules['matplotlib'] = m
+    sys.modules['matplotlib.pyplot'] = m.pyplot
 
 block_cipher = None
 
@@ -140,7 +146,7 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=True,
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,

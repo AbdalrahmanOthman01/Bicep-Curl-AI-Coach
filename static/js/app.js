@@ -443,4 +443,17 @@ document.addEventListener('DOMContentLoaded', () => {
       mainRepCount.style.color = '#fff';
     }, 300);
   }
+
+  // Graceful shutdown on standalone window close
+  window.addEventListener('beforeunload', () => {
+    try {
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon('/shutdown');
+      } else {
+        fetch('/shutdown', { method: 'POST', keepalive: true });
+      }
+    } catch (e) {
+      // Ignored on window exit
+    }
+  });
 });
